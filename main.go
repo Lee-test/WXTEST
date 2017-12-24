@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
-	"go-kit/model"
 	"net/http"
 	"os"
+
+	"github.com/relax-space/go-kit/model"
 
 	wxpay "github.com/relax-space/lemon-wxpay-sdk"
 
@@ -86,7 +87,24 @@ func Paywx(c echo.Context) error {
 }
 
 func Querywx(c echo.Context) error {
-	return nil
+	reqDto := wxpay.ReqQueryDto{}
+	if err := c.Bind(&reqDto); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResult(err.Error()))
+	}
+	account := Account()
+	reqDto.ReqBaseDto = &wxpay.ReqBaseDto{
+		AppId: account.AppId,
+		MchId: account.MchId,
+	}
+	cusomDto := wxpay.ReqCustomerDto{
+		Key: account.Key,
+	}
+	result, err := wxpay.Query(&reqDto, &cusomDto)
+	//fmt.Printf("%+v,%v", result, err)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResult(err.Error()))
+	}
+	return c.JSON(http.StatusOK, SuccessResult(result))
 }
 
 func Reversewx(c echo.Context) error {
@@ -94,7 +112,26 @@ func Reversewx(c echo.Context) error {
 }
 
 func Refundwx(c echo.Context) error {
-	return nil
+	reqDto := wxpay.ReqRefundDto{}
+	if err := c.Bind(&reqDto); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResult(err.Error()))
+	}
+	account := Account()
+	reqDto.ReqBaseDto = &wxpay.ReqBaseDto{
+		AppId: account.AppId,
+		MchId: account.MchId,
+	}
+	cusomDto := wxpay.ReqCustomerDto{
+		Key:          account.Key,
+		CertPathName: account.CertPathName,
+		CertPathKey:  account.CertPathKey,
+		RootCa:       account.RootCa,
+	}
+	result, err := wxpay.Refund(&reqDto, &cusomDto)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResult(err.Error()))
+	}
+	return c.JSON(http.StatusOK, SuccessResult(result))
 }
 
 func Account() greenAccount {
